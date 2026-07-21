@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-// IMPORTANTE: Nota que aquí agregué "Navigate" a los imports de react-router-dom
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Users, ShoppingCart, LogOut} from 'lucide-react';
+import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, MessageSquare } from 'lucide-react'; // <-- AGREGADO MessageSquare
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 import Login from './Login';
 import Productos from './Productos';
 import Usuarios from './Usuarios'; 
 import Ordenes from './Ordenes';
+import Resenas from './Resenas'; // <-- AGREGADO
 
-// 🛑 EL CANDADO DEL FRONTEND (Camino A)
-// Este componente revisa si tienes el Token. Si no lo tienes, te expulsa al Login.
 function RutaProtegida({ children }) {
   const token = localStorage.getItem('tokenAdmin');
   if (!token) {
@@ -54,6 +52,10 @@ function AdminLayout({ children }) {
           </button>
           <button onClick={() => navigate('/panel/ordenes')} className={navItemClass('/panel/ordenes')}>
             <ShoppingCart size={20} /> Órdenes 
+          </button>
+          {/* NUEVO BOTÓN PARA RESEÑAS */}
+          <button onClick={() => navigate('/panel/resenas')} className={navItemClass('/panel/resenas')}>
+            <MessageSquare size={20} /> Reseñas 
           </button>
         </nav>
 
@@ -271,6 +273,23 @@ export default function App() {
         <Route path="/panel/productos" element={<RutaProtegida><AdminLayout><Productos /></AdminLayout></RutaProtegida>} />
         <Route path="/panel/usuarios" element={<RutaProtegida><AdminLayout><Usuarios /></AdminLayout></RutaProtegida>} />
         <Route path="/panel/ordenes" element={<RutaProtegida><AdminLayout><Ordenes /></AdminLayout></RutaProtegida>} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        
+        <Route path="/panel" element={<RutaProtegida><AdminLayout><DashboardHome /></AdminLayout></RutaProtegida>} />
+        <Route path="/panel/productos" element={<RutaProtegida><AdminLayout><Productos /></AdminLayout></RutaProtegida>} />
+        <Route path="/panel/usuarios" element={<RutaProtegida><AdminLayout><Usuarios /></AdminLayout></RutaProtegida>} />
+        <Route path="/panel/ordenes" element={<RutaProtegida><AdminLayout><Ordenes /></AdminLayout></RutaProtegida>} />
+        {/* NUEVA RUTA PARA RESEÑAS */}
+        <Route path="/panel/resenas" element={<RutaProtegida><AdminLayout><Resenas /></AdminLayout></RutaProtegida>} />
       </Routes>
     </BrowserRouter>
   );

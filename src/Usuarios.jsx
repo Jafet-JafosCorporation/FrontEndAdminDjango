@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, X, User, Search } from 'lucide-react';
+import { Ban, Plus, X, User, Search } from 'lucide-react';
 
 export default function Usuarios() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   
-  // NUEVO: Variable del Buscador
   const [busqueda, setBusqueda] = useState('');
 
-  // Variables del formulario
   const [nuevoUsername, setNuevoUsername] = useState('');
   const [nuevoPassword, setNuevoPassword] = useState('');
   const [nuevoEmail, setNuevoEmail] = useState('');
   const [nuevoRole, setNuevoRole] = useState('usuario');
 
-  // 1. GET: Leer Usuarios
   const cargarUsuarios = async () => {
     try {
       const respuesta = await fetch('http://192.168.56.20:8000/api/admin/usuarios/', {
@@ -31,7 +28,6 @@ export default function Usuarios() {
     }
   };
 
-  // NUEVO: Lógica del Buscador en tiempo real
   const usuariosFiltrados = usuarios.filter(user => {
     const termino = busqueda.toLowerCase();
     const nombreCoincide = user.username.toLowerCase().includes(termino);
@@ -47,7 +43,6 @@ export default function Usuarios() {
     setIsModalOpen(true);
   };
 
-  // 2. POST: Crear Usuario
   const guardarUsuario = async (e) => {
     e.preventDefault();
     const paqueteDatos = { 
@@ -79,9 +74,9 @@ export default function Usuarios() {
     }
   };
 
-  // 3. DELETE: Borrar Usuario
-  const borrarUsuario = async (username) => {
-    const confirmar = window.confirm(`¿Estás seguro de que deseas eliminar al usuario ${username}?`);
+  // MODIFICADO: Inactivar Usuario
+  const inactivarUsuario = async (username) => {
+    const confirmar = window.confirm(`¿Estás seguro de que deseas INACTIVAR al usuario ${username}? Perderá el acceso al sistema.`);
     if (confirmar) {
       try {
         const respuesta = await fetch(`http://192.168.56.20:8000/api/admin/usuarios/${username}/`, {
@@ -94,7 +89,7 @@ export default function Usuarios() {
           cargarUsuarios();
         } else {
           const errorData = await respuesta.json();
-          alert(errorData.error || "No se pudo eliminar el usuario");
+          alert(errorData.error || "No se pudo inactivar el usuario");
         }
       } catch (error) {
         console.error("Fallo la conexión:", error);
@@ -108,11 +103,8 @@ export default function Usuarios() {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
-      
-      {/* Cabecera adaptada con el Buscador */}
       <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
         <h3 className="text-lg font-semibold text-gray-800">Directorio de Usuarios</h3>
-        
         <div className="flex w-full md:w-auto items-center gap-3">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -124,7 +116,6 @@ export default function Usuarios() {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
             />
           </div>
-          
           <button onClick={abrirModalCrear} className="flex shrink-0 items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
             <Plus size={16} /> Registrar Usuario
           </button>
@@ -157,8 +148,9 @@ export default function Usuarios() {
                     </span>
                   </td>
                   <td className="p-4 flex justify-center">
-                    <button onClick={() => borrarUsuario(user.username)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar">
-                      <Trash2 size={18} />
+                    {/* BOTÓN MODIFICADO */}
+                    <button onClick={() => inactivarUsuario(user.username)} className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-md transition-colors" title="Inactivar Usuario">
+                      <Ban size={18} />
                     </button>
                   </td>
                 </tr>
