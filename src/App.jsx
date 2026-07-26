@@ -268,22 +268,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         
-        {/* Envolvemos todas las rutas del panel con nuestro candado */}
-        <Route path="/panel" element={<RutaProtegida><AdminLayout><DashboardHome /></AdminLayout></RutaProtegida>} />
-        <Route path="/panel/productos" element={<RutaProtegida><AdminLayout><Productos /></AdminLayout></RutaProtegida>} />
-        <Route path="/panel/usuarios" element={<RutaProtegida><AdminLayout><Usuarios /></AdminLayout></RutaProtegida>} />
-        <Route path="/panel/ordenes" element={<RutaProtegida><AdminLayout><Ordenes /></AdminLayout></RutaProtegida>} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        
         <Route path="/panel" element={<RutaProtegida><AdminLayout><DashboardHome /></AdminLayout></RutaProtegida>} />
         <Route path="/panel/productos" element={<RutaProtegida><AdminLayout><Productos /></AdminLayout></RutaProtegida>} />
         <Route path="/panel/usuarios" element={<RutaProtegida><AdminLayout><Usuarios /></AdminLayout></RutaProtegida>} />

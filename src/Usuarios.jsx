@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Ban, Plus, X, User, Search } from 'lucide-react';
+import { Ban, UserCheck, Plus, X, User, Search } from 'lucide-react';
 
 export default function Usuarios() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   
+  // Variables de Búsqueda y Filtrado
   const [busqueda, setBusqueda] = useState('');
+  const [filtroActivo, setFiltroActivo] = useState('Todos');
 
+  // Variables del formulario
   const [nuevoUsername, setNuevoUsername] = useState('');
   const [nuevoPassword, setNuevoPassword] = useState('');
   const [nuevoEmail, setNuevoEmail] = useState('');
@@ -28,11 +31,24 @@ export default function Usuarios() {
     }
   };
 
+  // LÓGICA DE FILTRADO DOBLE (Buscador + Pestañas)
   const usuariosFiltrados = usuarios.filter(user => {
+    // 1. Coincidencia de texto en el buscador
     const termino = busqueda.toLowerCase();
-    const nombreCoincide = user.username.toLowerCase().includes(termino);
-    const correoCoincide = user.email ? user.email.toLowerCase().includes(termino) : false;
-    return nombreCoincide || correoCoincide;
+    const coincideBusqueda = 
+      user.username.toLowerCase().includes(termino) || 
+      (user.email && user.email.toLowerCase().includes(termino));
+
+    if (!coincideBusqueda) return false;
+
+    // 2. Coincidencia de pestaña (Revisando tanto el booleano como el texto)
+    const estaActivo = user.is_active !== false && user.estado !== 'Inactivo';
+
+    if (filtroActivo === 'Todos') return true;
+    if (filtroActivo === 'Activos') return estaActivo;
+    if (filtroActivo === 'Inactivos') return !estaActivo;
+
+    return true;
   });
 
   const abrirModalCrear = () => {
@@ -74,26 +90,37 @@ export default function Usuarios() {
     }
   };
 
-  // MODIFICADO: Inactivar Usuario
+  // ACCIÓN 1: Inactivar (Bloquear acceso)
   const inactivarUsuario = async (username) => {
     const confirmar = window.confirm(`¿Estás seguro de que deseas INACTIVAR al usuario ${username}? Perderá el acceso al sistema.`);
     if (confirmar) {
       try {
         const respuesta = await fetch(`http://192.168.56.20:8000/api/admin/usuarios/${username}/`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('tokenAdmin')}`
-          }
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('tokenAdmin')}` }
         });
-        if (respuesta.ok) {
-          cargarUsuarios();
-        } else {
-          const errorData = await respuesta.json();
-          alert(errorData.error || "No se pudo inactivar el usuario");
-        }
-      } catch (error) {
-        console.error("Fallo la conexión:", error);
-      }
+        if (respuesta.ok) cargarUsuarios();
+        else alert("No se pudo inactivar el usuario");
+      } catch (error) { console.error("Fallo la conexión:", error); }
+    }
+  };
+
+  // ACCIÓN 2: Reactivar (Restaurar acceso)
+  const reactivarUsuario = async (username) => {
+    const confirmar = window.confirm(`¿Deseas REACTIVAR al usuario ${username}? Volverá a tener permisos de acceso.`);
+    if (confirmar) {
+      try {
+        const respuesta = await fetch(`http://192.168.56.20:8000/api/admin/usuarios/${username}/`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('tokenAdmin')}` 
+          },
+          body: JSON.stringify({ estado: 'Activo', is_active: true })
+        });
+        if (respuesta.ok) cargarUsuarios();
+        else alert("No se pudo reactivar el usuario");
+      } catch (error) { console.error("Fallo la conexión:", error); }
     }
   };
 
@@ -103,8 +130,30 @@ export default function Usuarios() {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
-      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
-        <h3 className="text-lg font-semibold text-gray-800">Directorio de Usuarios</h3>
+      
+      {/* Cabecera, Buscador y Botón Registro */}
+      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">Directorio de Usuarios</h3>
+          
+          {/* Pestañas de Filtrado */}
+          <div className="flex bg-gray-100 p-1 rounded-lg mt-3">
+            {['Todos', 'Activos', 'Inactivos'].map((opcion) => (
+              <button
+                key={opcion}
+                onClick={() => setFiltroActivo(opcion)}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                  filtroActivo === opcion 
+                    ? 'bg-white text-indigo-600 shadow-sm font-semibold' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {opcion}
+              </button>
+            ))}
+          </div>
+        </div>
+        
         <div className="flex w-full md:w-auto items-center gap-3">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -113,7 +162,7 @@ export default function Usuarios() {
               placeholder="Buscar por usuario o correo..." 
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
             />
           </div>
           <button onClick={abrirModalCrear} className="flex shrink-0 items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
@@ -122,6 +171,7 @@ export default function Usuarios() {
         </div>
       </div>
       
+      {/* Tabla */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -129,37 +179,69 @@ export default function Usuarios() {
               <th className="p-4 font-medium">Usuario</th>
               <th className="p-4 font-medium">Correo</th>
               <th className="p-4 font-medium text-center">Rol</th>
+              <th className="p-4 font-medium text-center">Estado</th>
               <th className="p-4 font-medium text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {usuariosFiltrados.length === 0 ? (
-              <tr><td colSpan="4" className="p-8 text-center text-gray-500">No se encontraron usuarios que coincidan con la búsqueda.</td></tr>
+              <tr><td colSpan="5" className="p-8 text-center text-gray-500">No se encontraron usuarios en esta vista.</td></tr>
             ) : (
-              usuariosFiltrados.map((user, index) => (
-                <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-medium text-gray-800 flex items-center gap-2">
-                    <User size={16} className="text-gray-400" /> {user.username}
-                  </td>
-                  <td className="p-4 text-gray-600">{user.email || 'Sin correo'}</td>
-                  <td className="p-4 text-center">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="p-4 flex justify-center">
-                    {/* BOTÓN MODIFICADO */}
-                    <button onClick={() => inactivarUsuario(user.username)} className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-md transition-colors" title="Inactivar Usuario">
-                      <Ban size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
+              usuariosFiltrados.map((user, index) => {
+                const estaActivo = user.is_active !== false && user.estado !== 'Inactivo';
+
+                return (
+                  <tr key={index} className={`border-b border-gray-100 transition-colors ${!estaActivo ? 'bg-red-50/20' : 'hover:bg-gray-50'}`}>
+                    <td className="p-4 font-medium text-gray-800 flex items-center gap-2">
+                      <User size={16} className={estaActivo ? "text-indigo-500" : "text-gray-400"} /> 
+                      <span className={!estaActivo ? "line-through text-gray-400" : ""}>{user.username}</span>
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm">{user.email || 'Sin correo'}</td>
+                    
+                    <td className="p-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {user.role}
+                      </span>
+                    </td>
+
+                    {/* Columna de Estado Visual */}
+                    <td className="p-4 text-center">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        estaActivo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {estaActivo ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+
+                    {/* Botón Dinámico: Prohibir o Reactivar */}
+                    <td className="p-4 flex justify-center">
+                      {estaActivo ? (
+                        <button 
+                          onClick={() => inactivarUsuario(user.username)} 
+                          className="p-1.5 text-orange-600 hover:bg-orange-100 rounded-md transition-colors" 
+                          title="Inactivar Usuario (Bloquear)"
+                        >
+                          <Ban size={18} />
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => reactivarUsuario(user.username)} 
+                          className="p-1.5 text-green-600 hover:bg-green-100 rounded-md transition-colors" 
+                          title="Reactivar Usuario (Restaurar Acceso)"
+                        >
+                          <UserCheck size={18} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
+      {/* Modal para Crear Usuario */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 m-4 animate-in fade-in zoom-in-95 duration-200">
