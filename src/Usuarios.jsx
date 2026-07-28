@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Ban, UserCheck, Plus, X, User, Search } from 'lucide-react';
+import { BASE_URL } from './config'; // <-- IMPORTACIÓN DE LA URL CENTRAL
 
 export default function Usuarios() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   
-  // Variables de Búsqueda y Filtrado
   const [busqueda, setBusqueda] = useState('');
   const [filtroActivo, setFiltroActivo] = useState('Todos');
 
-  // Variables del formulario
   const [nuevoUsername, setNuevoUsername] = useState('');
   const [nuevoPassword, setNuevoPassword] = useState('');
   const [nuevoEmail, setNuevoEmail] = useState('');
@@ -17,7 +16,8 @@ export default function Usuarios() {
 
   const cargarUsuarios = async () => {
     try {
-      const respuesta = await fetch('http://192.168.56.20:8000/api/admin/usuarios/', {
+      // CONECTADO A BASE_URL
+      const respuesta = await fetch(`${BASE_URL}/api/admin/usuarios/`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('tokenAdmin')}`
         }
@@ -31,9 +31,7 @@ export default function Usuarios() {
     }
   };
 
-  // LÓGICA DE FILTRADO DOBLE (Buscador + Pestañas)
   const usuariosFiltrados = usuarios.filter(user => {
-    // 1. Coincidencia de texto en el buscador
     const termino = busqueda.toLowerCase();
     const coincideBusqueda = 
       user.username.toLowerCase().includes(termino) || 
@@ -41,7 +39,6 @@ export default function Usuarios() {
 
     if (!coincideBusqueda) return false;
 
-    // 2. Coincidencia de pestaña (Revisando tanto el booleano como el texto)
     const estaActivo = user.is_active !== false && user.estado !== 'Inactivo';
 
     if (filtroActivo === 'Todos') return true;
@@ -69,7 +66,8 @@ export default function Usuarios() {
     };
 
     try {
-      const respuesta = await fetch('http://192.168.56.20:8000/api/admin/usuarios/', {
+      // CONECTADO A BASE_URL
+      const respuesta = await fetch(`${BASE_URL}/api/admin/usuarios/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,12 +88,12 @@ export default function Usuarios() {
     }
   };
 
-  // ACCIÓN 1: Inactivar (Bloquear acceso)
   const inactivarUsuario = async (username) => {
     const confirmar = window.confirm(`¿Estás seguro de que deseas INACTIVAR al usuario ${username}? Perderá el acceso al sistema.`);
     if (confirmar) {
       try {
-        const respuesta = await fetch(`http://192.168.56.20:8000/api/admin/usuarios/${username}/`, {
+        // CONECTADO A BASE_URL
+        const respuesta = await fetch(`${BASE_URL}/api/admin/usuarios/${username}/`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('tokenAdmin')}` }
         });
@@ -105,12 +103,12 @@ export default function Usuarios() {
     }
   };
 
-  // ACCIÓN 2: Reactivar (Restaurar acceso)
   const reactivarUsuario = async (username) => {
     const confirmar = window.confirm(`¿Deseas REACTIVAR al usuario ${username}? Volverá a tener permisos de acceso.`);
     if (confirmar) {
       try {
-        const respuesta = await fetch(`http://192.168.56.20:8000/api/admin/usuarios/${username}/`, {
+        // CONECTADO A BASE_URL
+        const respuesta = await fetch(`${BASE_URL}/api/admin/usuarios/${username}/`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
@@ -136,7 +134,6 @@ export default function Usuarios() {
         <div>
           <h3 className="text-lg font-semibold text-gray-800">Directorio de Usuarios</h3>
           
-          {/* Pestañas de Filtrado */}
           <div className="flex bg-gray-100 p-1 rounded-lg mt-3">
             {['Todos', 'Activos', 'Inactivos'].map((opcion) => (
               <button
@@ -156,7 +153,7 @@ export default function Usuarios() {
         
         <div className="flex w-full md:w-auto items-center gap-3">
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
               placeholder="Buscar por usuario o correo..." 
@@ -204,7 +201,6 @@ export default function Usuarios() {
                       </span>
                     </td>
 
-                    {/* Columna de Estado Visual */}
                     <td className="p-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         estaActivo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -213,7 +209,6 @@ export default function Usuarios() {
                       </span>
                     </td>
 
-                    {/* Botón Dinámico: Prohibir o Reactivar */}
                     <td className="p-4 flex justify-center">
                       {estaActivo ? (
                         <button 

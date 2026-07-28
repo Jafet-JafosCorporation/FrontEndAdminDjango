@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, MessageSquare } from 'lucide-react'; // <-- AGREGADO MessageSquare
+import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, MessageSquare } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BASE_URL } from './config'; // <-- IMPORTACIÓN DE LA URL CENTRAL
 
 import Login from './Login';
 import Productos from './Productos';
 import Usuarios from './Usuarios'; 
 import Ordenes from './Ordenes';
-import Resenas from './Resenas'; // <-- AGREGADO
+import Resenas from './Resenas';
 
 function RutaProtegida({ children }) {
   const token = localStorage.getItem('tokenAdmin');
@@ -53,7 +54,6 @@ function AdminLayout({ children }) {
           <button onClick={() => navigate('/panel/ordenes')} className={navItemClass('/panel/ordenes')}>
             <ShoppingCart size={20} /> Órdenes 
           </button>
-          {/* NUEVO BOTÓN PARA RESEÑAS */}
           <button onClick={() => navigate('/panel/resenas')} className={navItemClass('/panel/resenas')}>
             <MessageSquare size={20} /> Reseñas 
           </button>
@@ -100,8 +100,8 @@ function DashboardHome() {
       try {
         const token = localStorage.getItem('tokenAdmin');
         
-        // 1. Traemos los Productos
-        const resProd = await fetch('http://192.168.56.20:8000/api/productos/');
+        // 1. Traemos los Productos (CONECTADO A BASE_URL)
+        const resProd = await fetch(`${BASE_URL}/api/productos/`);
         let listaProductos = [];
         if (resProd.ok) {
           const datos = await resProd.json();
@@ -112,8 +112,8 @@ function DashboardHome() {
           setMetricas({ total: listaProductos.length, valorInventario: valorTotal });
         }
 
-        // 2. Traemos las Órdenes para calcular ventas y usuarios
-        const resOrd = await fetch('http://192.168.56.20:8000/api/admin/ordenes/', {
+        // 2. Traemos las Órdenes (CONECTADO A BASE_URL)
+        const resOrd = await fetch(`${BASE_URL}/api/admin/ordenes/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -138,10 +138,8 @@ function DashboardHome() {
 
   // --- CÁLCULOS MATEMÁTICOS PARA TUS IDEAS ---
 
-  // A) Productos con menos stock (Alerta: 5 o menos)
   const productosPocoStock = productos.filter(p => p.stock <= 5).sort((a, b) => a.stock - b.stock);
 
-  // B) Top 5 Usuarios que más compran (Dinero gastado)
   const gastosPorUsuario = ordenes.reduce((acc, orden) => {
     acc[orden.usuario] = (acc[orden.usuario] || 0) + orden.total;
     return acc;
@@ -150,9 +148,8 @@ function DashboardHome() {
   const topUsuarios = Object.keys(gastosPorUsuario)
     .map(user => ({ nombre: user, gastado: gastosPorUsuario[user] }))
     .sort((a, b) => b.gastado - a.gastado)
-    .slice(0, 5); // Tomamos solo los 5 primeros
+    .slice(0, 5);
 
-  // C) Gráfica: Productos Más Vendidos (Cantidad de unidades)
   const ventasPorProducto = ordenes.reduce((acc, orden) => {
     acc[orden.nombre] = (acc[orden.nombre] || 0) + orden.quantity;
     return acc;
@@ -161,9 +158,8 @@ function DashboardHome() {
   const datosVendidos = Object.keys(ventasPorProducto)
     .map(prod => ({ nombre: prod, Vendidos: ventasPorProducto[prod] }))
     .sort((a, b) => b.Vendidos - a.Vendidos)
-    .slice(0, 5); // Top 5 para la gráfica
+    .slice(0, 5);
 
-  // D) Gráfica Original: Niveles de Stock
   const datosStock = productos.map(prod => ({ nombre: prod.nombre, Stock: prod.stock }));
 
   return (
@@ -188,7 +184,7 @@ function DashboardHome() {
       {/* SECCIÓN INTERMEDIA: GRÁFICAS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Gráfica 1: Stock (La que no querías borrar) */}
+        {/* Gráfica 1: Stock */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-6">Nivel de Stock Actual</h3>
           <div className="h-64">
@@ -204,7 +200,7 @@ function DashboardHome() {
           </div>
         </div>
 
-        {/* Gráfica 2: Productos más vendidos (Nueva) */}
+        {/* Gráfica 2: Productos más vendidos */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-6">Top Productos Más Vendidos</h3>
           <div className="h-64">
@@ -272,7 +268,6 @@ export default function App() {
         <Route path="/panel/productos" element={<RutaProtegida><AdminLayout><Productos /></AdminLayout></RutaProtegida>} />
         <Route path="/panel/usuarios" element={<RutaProtegida><AdminLayout><Usuarios /></AdminLayout></RutaProtegida>} />
         <Route path="/panel/ordenes" element={<RutaProtegida><AdminLayout><Ordenes /></AdminLayout></RutaProtegida>} />
-        {/* NUEVA RUTA PARA RESEÑAS */}
         <Route path="/panel/resenas" element={<RutaProtegida><AdminLayout><Resenas /></AdminLayout></RutaProtegida>} />
       </Routes>
     </BrowserRouter>

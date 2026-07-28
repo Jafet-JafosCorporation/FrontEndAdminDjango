@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from './config'; // <-- IMPORTACIÓN DE LA URL CENTRAL
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,7 +14,8 @@ export default function Login() {
     setMensajeError('');
 
     try {
-      const respuesta = await fetch('http://192.168.56.20:8000/api/login/', {
+      // CONECTADO A BASE_URL EN LUGAR DE LA IP DURA
+      const respuesta = await fetch(`${BASE_URL}/api/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

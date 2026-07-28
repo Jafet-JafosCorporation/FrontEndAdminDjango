@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, Plus, X, Search, MessageSquare, Tag, Award, Image as ImageIcon } from 'lucide-react';
+import { Edit, Trash2, Plus, X, Search, Tag, Award } from 'lucide-react';
+import { BASE_URL } from './config'; // <-- IMPORTACIÓN DE LA URL CENTRAL
 
 export default function Productos() {
   const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
 
-  // Formulario extendido para proyecto universitario pro
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoPrecio, setNuevoPrecio] = useState('');
@@ -19,7 +19,8 @@ export default function Productos() {
 
   const cargarProductos = async () => {
     try {
-      const res = await fetch('http://192.168.56.20:8000/api/productos/');
+      // CONECTADO A BASE_URL
+      const res = await fetch(`${BASE_URL}/api/productos/`);
       if (res.ok) {
         const datos = await res.json();
         setProductos(Array.isArray(datos) ? datos : (datos.productos || []));
@@ -29,7 +30,6 @@ export default function Productos() {
 
   useEffect(() => { cargarProductos(); }, []);
 
-  // Extraer categorías únicas para las pestañas de filtrado
   const categoriasUnicas = ['Todas', ...new Set(productos.map(p => p.categoria || 'General'))];
 
   const productosFiltrados = productos.filter(prod => {
@@ -64,7 +64,8 @@ export default function Productos() {
       descripcion: nuevaDescripcion || 'Producto de alta tecnología en el catálogo de JafosCorporation.'
     };
     try {
-      const url = productoEnEdicion ? `http://192.168.56.20:8000/api/admin/productos/${productoEnEdicion}/` : 'http://192.168.56.20:8000/api/admin/productos/';
+      // CONECTADO A BASE_URL
+      const url = productoEnEdicion ? `${BASE_URL}/api/admin/productos/${productoEnEdicion}/` : `${BASE_URL}/api/admin/productos/`;
       const metodo = productoEnEdicion ? 'PUT' : 'POST';
       const respuesta = await fetch(url, {
         method: metodo,
@@ -78,7 +79,8 @@ export default function Productos() {
   const borrarProducto = async (id) => {
     if (window.confirm("¿Estás seguro de eliminar este producto del catálogo?")) {
       try {
-        const res = await fetch(`http://192.168.56.20:8000/api/admin/productos/${id}/`, {
+        // CONECTADO A BASE_URL
+        const res = await fetch(`${BASE_URL}/api/admin/productos/${id}/`, {
           method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('tokenAdmin')}` }
         });
         if (res.ok) cargarProductos();
@@ -110,7 +112,7 @@ export default function Productos() {
         
         <div className="flex w-full md:w-auto items-center gap-3">
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" placeholder="Buscar por nombre o marca..." value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Truck, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { BASE_URL } from './config'; // <-- IMPORTACIÓN DE LA URL CENTRAL
 
 const ESTADOS_DISPONIBLES = ['Pendiente', 'Pagada', 'Enviada', 'Entregada', 'Cancelada'];
 
@@ -9,7 +10,8 @@ export default function Ordenes() {
 
   const cargarOrdenes = async () => {
     try {
-      const res = await fetch('http://192.168.56.20:8000/api/admin/ordenes/', {
+      // CONECTADO A BASE_URL EN LUGAR DE LA IP DURA
+      const res = await fetch(`${BASE_URL}/api/admin/ordenes/`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tokenAdmin')}` }
       });
       if (res.ok) {
@@ -32,7 +34,8 @@ export default function Ordenes() {
   // CAMBIO DE ESTADO EN VIVO
   const cambiarEstado = async (idOrden, nuevoEstado) => {
     try {
-      const res = await fetch(`http://192.168.56.20:8000/api/admin/ordenes/${idOrden}/`, {
+      // CONECTADO A BASE_URL EN LUGAR DE LA IP DURA
+      const res = await fetch(`${BASE_URL}/api/admin/ordenes/${idOrden}/`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
