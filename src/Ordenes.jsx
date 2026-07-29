@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Truck, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { ShoppingBag, Truck, CheckCircle2, Clock, AlertCircle, XCircle, CreditCard, Banknote } from 'lucide-react';
 import { BASE_URL } from './config'; // <-- IMPORTACIÓN DE LA URL CENTRAL
 
 const ESTADOS_DISPONIBLES = ['Pendiente', 'Pagada', 'Enviada', 'Entregada', 'Cancelada'];
@@ -105,15 +105,19 @@ export default function Ordenes() {
               <th className="p-4 font-medium">Producto</th>
               <th className="p-4 font-medium text-center">Cant.</th>
               <th className="p-4 font-medium text-right">Total</th>
+              <th className="p-4 font-medium text-center">Método de Pago</th> {/* NUEVA COLUMNA */}
               <th className="p-4 font-medium text-center">Gestión de Estado</th>
             </tr>
           </thead>
           <tbody>
             {ordenesFiltradas.length === 0 ? (
-              <tr><td colSpan="6" className="p-8 text-center text-gray-500">No hay pedidos registrados en este estado.</td></tr>
+              <tr><td colSpan="7" className="p-8 text-center text-gray-500">No hay pedidos registrados en este estado.</td></tr>
             ) : (
               ordenesFiltradas.map((orden, index) => {
                 const estadoActual = orden.estado || 'Pagada';
+                // Lógica de protección para órdenes antiguas sin método de pago
+                const metodoPago = orden.metodo_pago || 'Efectivo';
+                const esTarjeta = metodoPago.toLowerCase() === 'tarjeta';
                 
                 return (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
@@ -122,6 +126,18 @@ export default function Ordenes() {
                     <td className="p-4 text-gray-600 font-medium">{orden.nombre}</td>
                     <td className="p-4 text-center">{orden.quantity}</td>
                     <td className="p-4 text-right font-bold text-gray-800">${orden.total?.toLocaleString()}</td>
+                    
+                    {/* INDICADOR VISUAL DEL MÉTODO DE PAGO */}
+                    <td className="p-4 text-center">
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${
+                        esTarjeta 
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' 
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                      }`}>
+                        {esTarjeta ? <CreditCard size={14} /> : <Banknote size={14} />}
+                        {esTarjeta ? 'Tarjeta' : 'Efectivo'}
+                      </div>
+                    </td>
                     
                     {/* CONTROL DESPLEGABLE DE ESTADO */}
                     <td className="p-4 text-center">
